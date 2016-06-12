@@ -17,9 +17,10 @@
 package powermock.test.support;
 
 import org.powermock.core.classloader.MockClassLoader;
+import org.powermock.core.transformers.impl.ClassMockTransformerTest;
 
 /**
- * This class is used when running tests in {@link org.powermock.core.transformers.impl.MainMockTransformerTest}. It is
+ * This class is used when running tests in {@link ClassMockTransformerTest}. It is
  * placed in this package because classes in org.powermock.core.* are deferred by:
  * {@link MockClassLoader#packagesToBeDeferred}. Additionally, the class must be modified when it is loaded, and as such
  * not in {@link MockClassLoader#packagesToLoadButNotModify}.
@@ -45,6 +46,15 @@ public class MainMockTransformerTestSupport {
 
         public class SubClass extends SuperClass {
             public void dummyMethod() {}
+        }
+
+        public static class MultipleConstructors {
+
+            public MultipleConstructors() {}
+            protected MultipleConstructors(String s) {}
+            MultipleConstructors(int i) {}
+            private MultipleConstructors(Boolean[] array) {}
+            protected MultipleConstructors(int[] iarray, boolean b, String[] sarray) {}
         }
     }
 }

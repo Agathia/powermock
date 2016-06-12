@@ -19,20 +19,22 @@
     <parent>
         <groupId>org.sonatype.oss</groupId>
         <artifactId>oss-parent</artifactId>
-        <version>5</version>
+        <version>9</version>
     </parent>
     <groupId>org.powermock</groupId>
     <artifactId>powermock</artifactId>
     <packaging>pom</packaging>
-    <version>1.6.2-SNAPSHOT</version>
+    <version>1.6.6-SNAPSHOT</version>
     <name>${project.artifactId}</name>
     <url>http://www.powermock.org</url>
     <description>
         PowerMock allows you to unit test code normally regarded as untestable.
-        For instance it is possible to mock static methods, remove static initializers, allow mocking without dependency injection and more.
+        For instance it is possible to mock static methods, remove static initializers, allow mocking without dependency
+        injection and more.
         PowerMock works by bytecode manipulation.
         PowerMock also contain some utilities that gives you easier access to an objects internal state.
-        PowerMock can be used to test otherwise untestable code and also to achieve a cleaner separation between test and production code.
+        PowerMock can be used to test otherwise untestable code and also to achieve a cleaner separation between test
+        and production code.
     </description>
     <inceptionYear>2007</inceptionYear>
     <licenses>
@@ -59,38 +61,52 @@
             <email>jan.kronquist at jayway.com</email>
             <timezone>+1</timezone>
         </developer>
+        <developer>
+            <id>thekingnothing</id>
+            <name>Arthur Zagretdinov</name>
+            <email>arthur.zagretdinov at outlook.com</email>
+            <timezone>+3</timezone>
+        </developer>
     </developers>
 
     <scm>
-        <url>https://github.com/jayway/powermock/tree/master</url>
+        <url>git@github.com:jayway/powermock.git</url>
         <connection>scm:git:git://github.com/jayway/powermock.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/jayway/powermock.git</developerConnection>
     </scm>
 
     <issueManagement>
-        <system>Google Code</system>
-        <url>http://code.google.com/p/powermock/issues/list</url>
+        <system>Github</system>
+        <url>https://github.com/jayway/powermock/issues</url>
     </issueManagement>
     <modules>
         <module>core</module>
         <module>api</module>
-        <module>examples</module>
         <module>modules</module>
         <module>tests</module>
-        <module>release</module>
         <module>reflect</module>
         <module>classloading</module>
     </modules>
     <properties>
-        <easymock.version>3.3</easymock.version>
-        <mockito.version>1.10.19</mockito.version>
+        <easymock.version>3.4</easymock.version>
+        <hamcrest.version>1.3</hamcrest.version>
+        <assertj.version>3.4.1</assertj.version>
+        <cglib.version>2.2.2</cglib.version>
+        <objenesis.version>2.2</objenesis.version>
+        <javaassist.version>3.20.0-GA</javaassist.version>
+        <junit.usage.version>4.12</junit.usage.version>
+        <junit.rules.version>4.8.2</junit.rules.version>
+        <testng.version>6.9.10</testng.version>
+        <xstream.version>1.4.9</xstream.version>
+        <mockito1.version>1.10.19</mockito1.version>
+        <mockito2.version>2.0.42-beta</mockito2.version>
     </properties>
     <build>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.2</version>
+                <version>3.5.1</version>
                 <configuration>
                     <source>1.6</source>
                     <target>1.6</target>
@@ -102,7 +118,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
-                <version>2.4</version>
+                <version>3.0.0</version>
                 <executions>
                     <execution>
                         <id>attach-sources</id>
@@ -115,23 +131,12 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-site-plugin</artifactId>
-                <version>3.4</version>
-                <configuration>
-                    <reportPlugins>
-                        <plugin>
-                            <groupId>org.apache.maven.plugins</groupId>
-                            <artifactId>maven-javadoc-plugin</artifactId>
-                            <configuration>
-                                <additionalparam>-Xdoclint:none</additionalparam>
-                            </configuration>
-                        </plugin>
-                    </reportPlugins>
-                </configuration>
+                <version>3.5</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.9.1</version>
+                <version>2.10.3</version>
                 <executions>
                     <execution>
                         <id>attach-javadocs</id>
@@ -149,7 +154,7 @@
                     <dependency>
                         <groupId>commons-logging</groupId>
                         <artifactId>commons-logging</artifactId>
-                        <version>1.1.1</version>
+                        <version>1.2</version>
                     </dependency>
                 </dependencies>
             </plugin>
@@ -170,7 +175,7 @@
             <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
-                <version>2.5.3</version>
+                <version>3.0.1</version>
                 <executions>
                     <execution>
                         <id>bundle-manifest</id>
@@ -198,12 +203,12 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>
-                    <version>2.5</version>
+                    <version>2.6</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
-                    <version>2.18.1</version>
+                    <version>2.19.1</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -213,7 +218,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.9.1</version>
+                <version>2.10.3</version>
                 <configuration>
                     <aggregate>true</aggregate>
                     <breakiterator>true</breakiterator>
@@ -229,43 +234,34 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-report-plugin</artifactId>
-                <version>2.18.1</version>
+                <version>2.19.1</version>
                 <configuration>
                     <aggregate>true</aggregate>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-pmd-plugin</artifactId>
-                <version>3.3</version>
-                <configuration>
-                    <targetJdk>1.6</targetJdk>
-                    <rulesets>
-                        <ruleset>/rulesets/basic.xml</ruleset>
-                    </rulesets>
-                    <format>xml</format>
-                    <linkXref>true</linkXref>
-                    <sourceEncoding>utf-8</sourceEncoding>
-                    <minimumTokens>100</minimumTokens>
                 </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jxr-plugin</artifactId>
                 <version>2.5</version>
-                <configuration>
-                    <aggregate>true</aggregate>
-                </configuration>
+                <reportSets>
+                    <reportSet>
+                        <id>aggregate</id>
+                        <reports>
+                            <report>aggregate</report>
+                            <report>test-aggregate</report>
+                        </reports>
+                    </reportSet>
+                </reportSets>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-project-info-reports-plugin</artifactId>
-                <version>2.8</version>
+                <version>2.8.1</version>
             </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>findbugs-maven-plugin</artifactId>
-                <version>3.0.0</version>
+                <version>3.0.3</version>
                 <configuration>
                     <onlyAnalyze>org.powermock.*</onlyAnalyze>
                 </configuration>
@@ -321,6 +317,18 @@
                 </plugins>
             </build>
         </profile>
+        <profile>
+            <id>acceptance</id>
+            <modules>
+                <module>examples</module>
+            </modules>
+        </profile>
+        <profile>
+            <id>release</id>
+            <modules>
+                <module>release</module>
+            </modules>
+        </profile>
     </profiles>
     <dependencyManagement>
         <dependencies>
@@ -337,19 +345,47 @@
                 </exclusions>
             </dependency>
             <dependency>
-                <groupId>org.mockito</groupId>
-                <artifactId>mockito-all</artifactId>
-                <version>${mockito.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>org.objenesis</groupId>
                 <artifactId>objenesis</artifactId>
-                <version>2.1</version>
+                <version>${objenesis.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.hamcrest</groupId>
+                <artifactId>hamcrest-core</artifactId>
+                <version>${hamcrest.version}</version>
             </dependency>
             <dependency>
                 <groupId>cglib</groupId>
                 <artifactId>cglib-nodep</artifactId>
-                <version>2.2.2</version>
+                <version>${cglib.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.assertj</groupId>
+                <artifactId>assertj-core</artifactId>
+                <version>${assertj.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.javassist</groupId>
+                <artifactId>javassist</artifactId>
+                <version>${javaassist.version}</version>
+                <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
+                <version>${junit.usage.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.thoughtworks.xstream</groupId>
+                <artifactId>xstream</artifactId>
+                <version>${xstream.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.testng</groupId>
+                <artifactId>testng</artifactId>
+                <version>${testng.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

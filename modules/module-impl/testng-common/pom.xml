@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.powermock</groupId>
         <artifactId>powermock-modules</artifactId>
-        <version>1.6.2-SNAPSHOT</version>
+        <version>1.6.6-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
@@ -20,8 +20,6 @@
         <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
-            <version>6.8.13</version>
-            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.powermock</groupId>

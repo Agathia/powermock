@@ -19,10 +19,14 @@ import org.junit.rules.MethodRule;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.Statement;
 import org.powermock.core.MockRepository;
+import org.powermock.core.agent.JavaAgentClassRegister;
+import org.powermock.core.agent.JavaAgentFrameworkRegister;
+import org.powermock.core.agent.JavaAgentFrameworkRegisterFactory;
 import org.powermock.modules.agent.PowerMockAgent;
+import org.powermock.modules.agent.support.JavaAgentClassRegisterImpl;
 import org.powermock.modules.agent.support.PowerMockAgentTestInitializer;
 import org.powermock.reflect.Whitebox;
-import org.powermock.reflect.proxyframework.RegisterProxyFramework;
+import org.powermock.reflect.proxyframework.ClassLoaderRegisterProxyFramework;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
@@ -37,10 +41,13 @@ public class PowerMockRule implements MethodRule {
         PowerMockAgent.initializeIfPossible();
     }
 
+    @Override
     public Statement apply(Statement base, FrameworkMethod method, Object target) {
-        PowerMockAgentTestInitializer.initialize(target.getClass());
 
-        return new PowerMockStatement(base, target);
+        JavaAgentClassRegister agentClassRegister = new JavaAgentClassRegisterImpl();
+        PowerMockAgentTestInitializer.initialize(target.getClass(), agentClassRegister);
+
+        return new PowerMockStatement(base, target, agentClassRegister);
     }
 }
 
@@ -48,10 +55,14 @@ class PowerMockStatement extends Statement {
     private static final String ANNOTATION_ENABLER = "org.powermock.api.extension.listener.AnnotationEnabler";
     private final Statement fNext;
     private final Object target;
+    private final JavaAgentClassRegister agentClassRegister;
+    private final JavaAgentFrameworkRegister javaAgentFrameworkRegister;
 
-    public PowerMockStatement(Statement base, Object target) {
-        fNext = base;
+    public PowerMockStatement(Statement base, Object target, JavaAgentClassRegister agentClassRegister) {
+        this.fNext = base;
         this.target = target;
+        this.agentClassRegister = agentClassRegister;
+        this.javaAgentFrameworkRegister = JavaAgentFrameworkRegisterFactory.create();
     }
 
     @Override
@@ -60,16 +71,27 @@ class PowerMockStatement extends Statement {
         try {
             injectMocksUsingAnnotationEnabler(target, annotationEnabler);
             registerProxyFramework();
+            setFrameworkAgentClassRegister();
             fNext.evaluate();
         } finally {
             // Clear the mock repository after each test
             MockRepository.clear();
             clearMockFields(target, annotationEnabler);
+            clearFrameworkAgentClassRegister();
         }
+    }
+    
+    private void clearFrameworkAgentClassRegister() {
+        agentClassRegister.clear();
+        javaAgentFrameworkRegister.clear();
+    }
+    
+    private void setFrameworkAgentClassRegister() {
+        javaAgentFrameworkRegister.set(agentClassRegister);
     }
 
     private Object loadAnnotationEnableIfPresent() {
-        boolean hasAnnotationEnabler = hasClass(ANNOTATION_ENABLER);
+        boolean hasAnnotationEnabler = hasAnnotationEnablerClass();
         if (!hasAnnotationEnabler) {
             return null;
         }
@@ -81,9 +103,9 @@ class PowerMockStatement extends Statement {
         }
     }
 
-    private boolean hasClass(String className) {
+    private boolean hasAnnotationEnablerClass() {
         try {
-            Class.forName(className, false, Thread.currentThread().getContextClassLoader());
+            Class.forName(ANNOTATION_ENABLER, false, Thread.currentThread().getContextClassLoader());
             return true;
         } catch (ClassNotFoundException e) {
             return false;
@@ -108,28 +130,6 @@ class PowerMockStatement extends Statement {
     }
 
     private static void registerProxyFramework() {
-        Class<?> proxyFrameworkClass;
-        ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
-        try {
-            proxyFrameworkClass = Class.forName("org.powermock.api.extension.proxyframework.ProxyFrameworkImpl", false, contextClassLoader);
-        } catch (ClassNotFoundException e) {
-            throw new IllegalStateException(
-                    "Extension API error: org.powermock.api.extension.proxyframework.ProxyFrameworkImpl could not be located in classpath.");
-        }
-
-        Class<?> proxyFrameworkRegistrar = null;
-        try {
-            proxyFrameworkRegistrar = Class.forName(RegisterProxyFramework.class.getName(), false, contextClassLoader);
-        } catch (ClassNotFoundException e) {
-            // Should never happen
-            throw new RuntimeException(e);
-        }
-        try {
-            Whitebox.invokeMethod(proxyFrameworkRegistrar, "registerProxyFramework", Whitebox.newInstance(proxyFrameworkClass));
-        } catch (RuntimeException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        ClassLoaderRegisterProxyFramework.registerProxyframework(Thread.currentThread().getContextClassLoader());
     }
 }

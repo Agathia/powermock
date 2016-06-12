@@ -1,21 +1,23 @@
 /*
- * Copyright 2013 the original author or authors.
+ *   Copyright 2016 the original author or authors.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ *
  */
 package org.powermock.core.transformers.impl;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.HashSet;
@@ -23,6 +25,7 @@ import javassist.CannotCompileException;
 import javassist.CtClass;
 import javassist.CtConstructor;
 import javassist.CtMethod;
+import javassist.CtPrimitiveType;
 import javassist.Modifier;
 import javassist.NotFoundException;
 import javassist.bytecode.AnnotationsAttribute;
@@ -32,20 +35,26 @@ import org.powermock.core.transformers.MockTransformer;
 
 /**
  * MockTransformer implementation that will make PowerMock test-class
- * enhancements for three purposes...
+ * enhancements for four purposes...
  * 1) Make test-class static initializer and constructor send crucial details
  * (for PowerMockTestListener events) to GlobalNotificationBuildSupport so that
  * this information can be forwarded to whichever
  * facility is used for composing the PowerMockTestListener events.
  * 2) Removal of test-method annotations as a mean to achieve test-suite
  * chunking!
- * 3) Set test-class defer constructor (if exist) as protected instead of public.
+ * 3) Restore original test-class constructors` accesses
+ * (in case they have all been made public by {@link
+ * ClassMockTransformer#setAllConstructorsToPublic(javassist.CtClass)})
+ * - to avoid that multiple <i>public</i> test-class constructors cause
+ * a delegate runner from JUnit (or 3rd party) to bail out with an
+ * error message such as "Test class can only have one constructor".
+ * 4) Set test-class defer constructor (if exist) as protected instead of public.
  * Otherwise a delegate runner from JUnit (or 3rd party) might get confused by
  * the presence of more than one test-class constructor and bail out with an
  * error message such as "Test class can only have one constructor".
  *
- * The #3 enhancement will also be enforced for the defer-constructors of
- * classes that are nested within the test-class.
+ * The #3 and #4 enhancements will also be enforced on the constructors
+ * of classes that are nested within the test-class.
  */
 public abstract class TestClassTransformer implements MockTransformer {
 
@@ -63,10 +72,12 @@ public abstract class TestClassTransformer implements MockTransformer {
 
     public static ForTestClass forTestClass(final Class<?> testClass) {
         return new ForTestClass() {
+            @Override
             public RemovesTestMethodAnnotation removesTestMethodAnnotation(
                     final Class<? extends Annotation> testMethodAnnotation) {
                 return new RemovesTestMethodAnnotation() {
 
+                    @Override
                     public TestClassTransformer fromMethods(
                             final Collection<Method> testMethodsThatRunOnOtherClassLoaders) {
                         return new TestClassTransformer(testClass, testMethodAnnotation) {
@@ -93,6 +104,7 @@ public abstract class TestClassTransformer implements MockTransformer {
                         };
                     }
 
+                    @Override
                     public TestClassTransformer fromAllMethodsExcept(
                             Method singleMethodToRunOnTargetClassLoader) {
                         final String targetMethodSignature =
@@ -132,6 +144,27 @@ public abstract class TestClassTransformer implements MockTransformer {
                 && '$' == clazzName.charAt(testClass.getName().length());
     }
 
+    private Class<?> asOriginalClass(CtClass type) throws Exception {
+        try {
+            return type.isArray()
+                    ? Array.newInstance(asOriginalClass(type.getComponentType()), 0).getClass()
+                    : type.isPrimitive()
+                    ? Primitives.getClassFor((CtPrimitiveType) type)
+                    : Class.forName(type.getName(), true, testClass.getClassLoader());
+        } catch (Exception ex) {
+            throw new RuntimeException("Cannot resolve type: " + type, ex);
+        }
+    }
+
+    private Class<?>[] asOriginalClassParams(CtClass[] parameterTypes)
+    throws Exception {
+        final Class<?>[] classParams = new Class[parameterTypes.length];
+        for (int i = 0; i < classParams.length; ++i) {
+            classParams[i] = asOriginalClass(parameterTypes[i]);
+        }
+        return classParams;
+    }
+
     abstract boolean mustHaveTestAnnotationRemoved(CtMethod method) throws Exception;
 
     private void removeTestMethodAnnotationFrom(CtMethod m)
@@ -160,6 +193,7 @@ public abstract class TestClassTransformer implements MockTransformer {
         }
     }
 
+    @Override
     public CtClass transform(final CtClass clazz) throws Exception {
         if (clazz.isFrozen()) {
             clazz.defrost();
@@ -169,9 +203,11 @@ public abstract class TestClassTransformer implements MockTransformer {
             removeTestAnnotationsForTestMethodsThatRunOnOtherClassLoader(clazz);
             addLifeCycleNotifications(clazz);
             makeDeferConstructorNonPublic(clazz);
+            restoreOriginalConstructorsAccesses(clazz);
 
         } else if (isNestedWithinTestClass(clazz)) {
             makeDeferConstructorNonPublic(clazz);
+            restoreOriginalConstructorsAccesses(clazz);
         }
 
         return clazz;
@@ -221,6 +257,31 @@ public abstract class TestClassTransformer implements MockTransformer {
                     notificationCode,
                     asFinally/* unless there is a super-class, because of this
                               * problem: https://community.jboss.org/thread/94194*/);
+        }
+    }
+
+    private void restoreOriginalConstructorsAccesses(CtClass clazz) throws Exception {
+        Class<?> originalClass = testClass.getName().equals(clazz.getName())
+                ? testClass
+                : Class.forName(clazz.getName(), true, testClass.getClassLoader());
+        for (final CtConstructor ctConstr : clazz.getConstructors()) {
+            int ctModifiers = ctConstr.getModifiers();
+            if (false == Modifier.isPublic(ctModifiers)) {
+                /* Probably a defer-constructor */
+                continue;
+            }
+            int desiredAccessModifiers = originalClass.getDeclaredConstructor(
+                    asOriginalClassParams(ctConstr.getParameterTypes())).getModifiers();
+
+            if (Modifier.isPrivate(desiredAccessModifiers)) {
+                ctConstr.setModifiers(Modifier.setPrivate(ctModifiers));
+            } else if (Modifier.isProtected(desiredAccessModifiers)) {
+                ctConstr.setModifiers(Modifier.setProtected(ctModifiers));
+            } else if (false == Modifier.isPublic(desiredAccessModifiers)) {
+                ctConstr.setModifiers(Modifier.setPackage(ctModifiers));
+            } else {
+                /* ctConstr remains public */
+            }
         }
     }
 

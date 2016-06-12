@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.powermock</groupId>
         <artifactId>powermock</artifactId>
-        <version>1.6.2-SNAPSHOT</version>
+        <version>1.6.6-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
@@ -25,6 +25,11 @@
         <dependency>
             <groupId>org.powermock</groupId>
             <artifactId>powermock-api-mockito</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.powermock</groupId>
+            <artifactId>powermock-api-mockito-common</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -83,6 +88,12 @@
         <dependency>
             <groupId>org.powermock</groupId>
             <artifactId>powermock-api-mockito</artifactId>
+            <version>${project.version}</version>
+            <classifier>sources</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.powermock</groupId>
+            <artifactId>powermock-api-mockito-common</artifactId>
             <version>${project.version}</version>
             <classifier>sources</classifier>
         </dependency>

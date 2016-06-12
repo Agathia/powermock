@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.powermock</groupId>
         <artifactId>powermock-modules-test</artifactId>
-        <version>1.6.2-SNAPSHOT</version>
+        <version>1.6.6-SNAPSHOT</version>
     </parent>
 
     <artifactId>powermock-modules-easymock-test</artifactId>
@@ -43,5 +43,6 @@
         <module>junit47-test</module>
         <module>junit48-test</module>
         <module>junit410-test</module>
+        <module>junit4-agent</module>
     </modules>
 </project>

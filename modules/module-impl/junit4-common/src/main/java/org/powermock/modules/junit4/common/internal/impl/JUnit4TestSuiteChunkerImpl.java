@@ -15,11 +15,15 @@
  */
 package org.powermock.modules.junit4.common.internal.impl;
 
-import junit.framework.TestCase;
 import org.junit.Test;
 import org.junit.runner.Description;
-import org.junit.runner.manipulation.*;
+import org.junit.runner.manipulation.Filter;
+import org.junit.runner.manipulation.Filterable;
+import org.junit.runner.manipulation.NoTestsRemainException;
+import org.junit.runner.manipulation.Sortable;
+import org.junit.runner.manipulation.Sorter;
 import org.junit.runner.notification.RunNotifier;
+import org.powermock.core.reporter.MockingFrameworkReporter;
 import org.powermock.core.spi.PowerMockTestListener;
 import org.powermock.core.spi.testresult.TestSuiteResult;
 import org.powermock.core.spi.testresult.impl.TestSuiteResultImpl;
@@ -34,15 +38,21 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 public class JUnit4TestSuiteChunkerImpl extends AbstractTestSuiteChunkerImpl<PowerMockJUnitRunnerDelegate> implements
 		JUnit4TestSuiteChunker, Filterable, Sortable {
+	
+    private static final Class<? extends Annotation> testMethodAnnotation = Test.class;
 
 	private Description description;
 	private final Class<? extends PowerMockJUnitRunnerDelegate> runnerDelegateImplementationType;
-	private static final Class<? extends Annotation> testMethodAnnotation = Test.class;
+
 
 	public JUnit4TestSuiteChunkerImpl(Class<?> testClass,
 			Class<? extends PowerMockJUnitRunnerDelegate> runnerDelegateImplementationType) throws Exception {
@@ -69,8 +79,10 @@ public class JUnit4TestSuiteChunkerImpl extends AbstractTestSuiteChunkerImpl<Pow
 				throw new RuntimeException(cause);
 			}
 		}
+
 	}
 
+    @Override
 	public void run(RunNotifier notifier) {
 		List<TestChunk> chunkEntries = getTestChunks();
 		Iterator<TestChunk> iterator = chunkEntries.iterator();
@@ -82,12 +94,13 @@ public class JUnit4TestSuiteChunkerImpl extends AbstractTestSuiteChunkerImpl<Pow
 		final Class<?> testClass = getTestClasses()[0];
 		final PowerMockTestListener[] powerMockTestListeners = (PowerMockTestListener[]) getPowerMockTestListenersLoadedByASpecificClassLoader(
 				testClass, this.getClass().getClassLoader());
-		final Set<Method> allMethods = new LinkedHashSet<Method>();
+
+	    final Set<Method> allMethods = new LinkedHashSet<Method>();
 		for (TestChunk testChunk : getTestChunks()) {
 			allMethods.addAll(testChunk.getTestMethodsToBeExecutedByThisClassloader());
 		}
 
-		final Method[] allMethodsAsArray = allMethods.toArray(new Method[0]);
+		final Method[] allMethodsAsArray = allMethods.toArray(new Method[allMethods.size()]);
 		final PowerMockTestNotifier powerMockTestNotifier = new PowerMockTestNotifierImpl(powerMockTestListeners);
 		powerMockTestNotifier.notifyBeforeTestSuiteStarted(testClass, allMethodsAsArray);
 
@@ -103,7 +116,10 @@ public class JUnit4TestSuiteChunkerImpl extends AbstractTestSuiteChunkerImpl<Pow
 			final ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
 			Thread.currentThread().setContextClassLoader(key);
 			try {
+                MockingFrameworkReporter mockingFrameworkReporter = getMockingFrameworkReporter();
+                mockingFrameworkReporter.enable();
 				delegate.run(notifier);
+                mockingFrameworkReporter.disable();
 			} finally {
 				Thread.currentThread().setContextClassLoader(originalClassLoader);
 			}
@@ -121,11 +137,11 @@ public class JUnit4TestSuiteChunkerImpl extends AbstractTestSuiteChunkerImpl<Pow
 		powerMockTestNotifier.notifyAfterTestSuiteEnded(testClass, allMethodsAsArray, testSuiteResult);
 	}
 
+    private MockingFrameworkReporter getMockingFrameworkReporter() {return getFrameworkReporterFactory().create();}
+
+    @Override
 	public boolean shouldExecuteTestForMethod(Class<?> testClass, Method potentialTestMethod) {
-		return (potentialTestMethod.getName().startsWith("test")
-				&& Modifier.isPublic(potentialTestMethod.getModifiers())
-				&& potentialTestMethod.getReturnType().equals(Void.TYPE) && TestCase.class.isAssignableFrom(testClass) || potentialTestMethod
-				.isAnnotationPresent(Test.class));
+		return new JUnit4TestMethodChecker(testClass, potentialTestMethod).isTestMethod();
 	}
 
 	@Override
@@ -153,12 +169,12 @@ public class JUnit4TestSuiteChunkerImpl extends AbstractTestSuiteChunkerImpl<Pow
 		final Class<?> delegateClass = Class.forName(runnerDelegateImplementationType.getName(), false, classLoader);
 		Constructor<?> con = delegateClass.getConstructor(new Class[] { Class.class, String[].class,
 				powerMockTestListenerArrayType });
-		final PowerMockJUnitRunnerDelegate newInstance = (PowerMockJUnitRunnerDelegate) con.newInstance(new Object[] {
-				testClassLoadedByMockedClassLoader, methodNames.toArray(new String[0]),
-				getPowerMockTestListenersLoadedByASpecificClassLoader(testClass, classLoader) });
-		return newInstance;
+        return (PowerMockJUnitRunnerDelegate) con.newInstance(new Object[] {
+                testClassLoadedByMockedClassLoader, methodNames.toArray(new String[methodNames.size()]),
+                getPowerMockTestListenersLoadedByASpecificClassLoader(testClass, classLoader) });
 	}
 
+	@Override
 	public synchronized int getTestCount() {
 		if (testCount == NOT_INITIALIZED) {
 			testCount = 0;
@@ -169,6 +185,7 @@ public class JUnit4TestSuiteChunkerImpl extends AbstractTestSuiteChunkerImpl<Pow
 		return testCount;
 	}
 
+	@Override
 	public Description getDescription() {
 		if (description == null) {
 			if (delegates.size() == 0) {
@@ -200,6 +217,7 @@ public class JUnit4TestSuiteChunkerImpl extends AbstractTestSuiteChunkerImpl<Pow
 		return description;
 	}
 
+	@Override
 	public void filter(Filter filter) throws NoTestsRemainException {
 		for (Object delegate : delegates) {
 			if (delegate instanceof Filterable) {
@@ -208,6 +226,7 @@ public class JUnit4TestSuiteChunkerImpl extends AbstractTestSuiteChunkerImpl<Pow
 		}
 	}
 
+	@Override
 	public void sort(Sorter sorter) {
 		for (Object delegate : delegates) {
 			if (delegate instanceof Sortable) {
@@ -215,4 +234,5 @@ public class JUnit4TestSuiteChunkerImpl extends AbstractTestSuiteChunkerImpl<Pow
 			}
 		}
 	}
+
 }

@@ -91,7 +91,7 @@ class NotificationBuilder {
             ongoingTestRuns.put(testDescription, this);            
         }
 
-        Class<?> testClass() {
+        final Class<?> testClass() {
             if (null == testClassName) {
                 return testInstance.getClass();
             } else {
@@ -121,6 +121,7 @@ class NotificationBuilder {
                     testInstance, testMethod, unsupportedMethodArgs, this);
         }
 
+        @Override
         public Result getResult() {
             return this.result;
         }

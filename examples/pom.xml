@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.powermock</groupId>
         <artifactId>powermock</artifactId>
-        <version>1.6.2-SNAPSHOT</version>
+        <version>1.6.6-SNAPSHOT</version>
     </parent>
 
     <groupId>org.powermock.examples</groupId>
@@ -34,11 +34,14 @@
         <module>jcl</module>
         <module>jdom</module>
         <module>jmock</module>
+        <module>spring-easymock</module>
         <module>spring-mockito</module>
         <module>spring-mockito-delegate</module>
         <module>spring-mockito-xml-agent</module>
         <module>spring-mockito-xml</module>
         <module>java8</module>
+        <module>byte-buddy-mockito</module>
+        <module>byte-buddy-easymock</module>
     </modules>
 
     <dependencyManagement>

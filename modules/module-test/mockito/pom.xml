@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.powermock</groupId>
         <artifactId>powermock-modules-test</artifactId>
-        <version>1.6.2-SNAPSHOT</version>
+        <version>1.6.6-SNAPSHOT</version>
     </parent>
 
     <artifactId>powermock-modules-test-mockito</artifactId>
@@ -15,12 +15,60 @@
         Tests for Mockito module.
     </description>
 
+    <profiles>
+        <profile>
+            <id>mockito</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>org.powermock</groupId>
+                    <artifactId>powermock-api-mockito-common</artifactId>
+                    <version>${project.version}</version>
+                    <scope>test</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.powermock</groupId>
+                    <artifactId>powermock-api-mockito</artifactId>
+                    <version>${project.version}</version>
+                    <scope>test</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.mockito</groupId>
+                    <artifactId>mockito-core</artifactId>
+                    <version>${mockito1.version}</version>
+                    <scope>test</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+        <profile>
+            <id>mockito2</id>
+            <dependencies>
+                <dependency>
+                    <groupId>org.powermock</groupId>
+                    <artifactId>powermock-api-mockito-common</artifactId>
+                    <version>${project.version}</version>
+                    <scope>test</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.powermock</groupId>
+                    <artifactId>powermock-api-mockito2</artifactId>
+                    <version>${project.version}</version>
+                    <scope>test</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.mockito</groupId>
+                    <artifactId>mockito-core</artifactId>
+                    <version>${mockito2.version}</version>
+                    <scope>test</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+    </profiles>
+
+
     <dependencies>
-        <dependency>
-            <groupId>org.powermock</groupId>
-            <artifactId>powermock-api-mockito</artifactId>
-            <version>${project.version}</version>
-        </dependency>
         <dependency>
             <groupId>org.powermock.tests</groupId>
             <artifactId>powermock-tests-utils</artifactId>
@@ -36,5 +84,9 @@
         <module>junit4-rule-xstream</module>
         <module>junit4-agent</module>
         <module>junit4-delegate</module>
+        <module>testng</module>
+        <module>junit4-java8</module>
+        <module>junit4-java8-agent</module>
+        <module>junit4-java8-rule-xstream</module>
     </modules>
 </project>

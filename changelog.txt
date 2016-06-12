@@ -1,8 +1,59 @@
 Change log next version
 -----------------------
+* Fix #668 @Mock fields are not injected anymore (1.6.5 regression)
+* Renamed org.powermock.reflect.internal.WhiteboxImpl.getAllMetodsExcept to org.powermock.reflect.internal.WhiteboxImpl.getAllMethodsExcept (typo)
+
+Change log 1.6.5 (2015-04-30)
+-----------------------------
+* Add ability to chain returns with doReturn() (thanks to "gauee" for pull request) (issue #599)
+* Code quality improvement, @Override annotation should be used on any method overriding (since Java 5) or implementing (since Java 6) another one
+* PowerMockRunner now processes JUnit Rules correctly (thanks to Stefan Birkner for pull request) (issue 427)
+* Added support for @TestSubject in EasyMock API. This is the equivalent of @InjectMocks in Mockito (big thanks to Arthur Zagretdinov for pull request)
+* Added experimental support for mockito 2.x
+* Ensuring JVM method size limit is never exceeded. Throw an user frendly exception if method size is exceeded. (thanks to Tomasz Przybyla for pull request) (issue #661)
+* Fix #214: Whitebox.invokeConstructor may not work as expected with overloaded constructors
+* Fix #352: PowerMockRunner should run tests defined in super class
+* Fix #510: Static method mocking with Mockito 1.9.5 and Powermock fails with Java 8 Consumer Interface
+* Fix #512: @PrepareForTest on method not working with PowerMockRule
+* Fix #652: PowerMock stubbing void method don't work for overloaded methods
+* Fix #648: TestNG SkipException doesn't work with PowerMock
+* Fix #634/#632: Add workaround as fix  for Mockito 1+. Wait fix from Mockito team for Mockito 2.
+* Fix #590: suppress(method) doesn't work on a @Spy/PowerMockito.spy
+* Upgraded commons-logging dependency to version 1.2
+* Upgraded objenesis dependency to version 2.2
+* Upgraded TestNG dependency to version 6.9.10.
+* Upgraded xStream dependency to version 1.4.9.
+* ASM for PowerMock Javaagent repackaged from new version 5.0.4
+
+Change log 1.6.4 (2015-12-11)
+-----------------------------
+* DelegatingPowerMockRunner now implements Filterable interface to allow running for example individual test methods (thanks to chang-chao for pull request)
+* Fixed jacoco/powermock integration issue (thanks to Evgeny Astafyev for pull request)
+* Improvements to StackTraceCleanerProvider which cleans powermock classes from a stack trace
+* Replaced usage of uberjar mockito-all with mockito-core (thanks to Petr Široký and René Scheibe for helping out)
+* Code quality improvement, constructors only call non-overridable methods (thanks to Christian Ivan for pull request)
+
+Change log 1.6.3 (2015-10-02)
+----------------------------
+* Mock name in @Mock(name="abc") annotations are no longer ignored for the Mockito API extension
+* Fixed NPE in withArguments() constructor (thanks to Tomoyuki Saito for pull request)
+* Upgraded Javassist dependency to version 3.20.0-GA.
+* Using soft reference in classloader cache
+* MockClassloader now extends Javassist Loader classloader to implement findClass etc
+* PowerMock now works better with ByteBuddy (issue 579)
+* This allows creating mocks in the applyInterceptionPolicy method of MockPolicy, which in turn allows using MockPolicy together with PowerMockRule (issue 581).
+* Upgraded the powermock-easymock extension to use EasyMock 3.4
+
+Change log 1.6.2 (2015-01-03)
+----------------------------
 * PowerMockRunnerDelegate annotation now uses @Inherited (thanks to Henrik Kaipe for pull request)
 * Tests can now have multiple constructors (thanks to Henrik Kaipe for pull request)
 * Cleanup pom files and added version numbers (thanks to René Scheibe for pull request)
+* Fix "Test class can only have one constructor" issue that occurs when a JUnit or 3rd-party delegate runner (specified by a PowerMockRunnerDelegate annotation) can only deal with one public constructor. (thanks to Henrik Kaipe for pull request)
+* Packaged some of the Mocktio classes internally since Mockito is moving from CgLib to ByteBuddy. (thanks to Brice Dutheil for the pull request).
+* Upgraded Javassist dependency to version 3.19.0-GA.
+* Upgraded TestNG dependency to version 6.8.21.
+* The PowerMock EasyMock Api now depends on EasyMock 3.3.1.
 
 Change log 1.6.1 (2015-01-03)
 ----------------------------
